@@ -124,6 +124,9 @@ else:
 
     workplace_mobility = df.groupby('sub_region_1')['workplaces_percent_change_from_baseline'].mean().reset_index()
 
+    print(indonesia_map.columns)
+    print(workplace_mobility.columns)
+
     # Update this line to point to your local shapefile
     indonesia_map = gpd.read_file("data/ne_10m_admin_0_countries.shp")
     
