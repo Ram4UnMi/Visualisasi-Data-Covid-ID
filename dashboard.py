@@ -48,105 +48,105 @@ data_for_clustering = filtered_df[clustering_columns].dropna()
 
 # Validate data input
 if data_for_clustering.isnull().values.any():
-    raise ValueError("Clustering columns contain NaN values. Please clean the data or handle missing values.")
-
-# Scale the data
-data_scaled = StandardScaler().fit_transform(data_for_clustering)
-
-# Perform clustering
-kmeans = KMeans(n_clusters=3, random_state=42)
-clusters = kmeans.fit_predict(data_scaled)
-
-# Add clusters back to filtered_df using the original index
-filtered_df = filtered_df.loc[data_for_clustering.index]  # Align indices
-filtered_df['Cluster'] = clusters
-
-# Visualizations
-st.title("Strategic Insights from Mobility Data")
-st.markdown("""
-This dashboard provides strategic insights into mobility trends across Indonesia, leveraging clustering and geospatial analysis.
-""")
-
-# Heatmap with Emphasis
-st.header("Residential Mobility Heatmap")
-st.markdown("""
-The heatmap below highlights **residential mobility trends** by day of the week and hour of the day. 
-Use this to identify patterns in stay-at-home behavior.
-""")
-
-heatmap_data = filtered_df.pivot_table(
-    index=filtered_df['date'].dt.weekday,
-    columns=filtered_df['date'].dt.hour,
-    values='residential_percent_change_from_baseline',
-    aggfunc='mean'
-)
-
-if not heatmap_data.empty:
-    heatmap_data.index = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-    fig_heatmap = px.imshow(
-        heatmap_data,
-        labels={"color": "% Change"},
-        title="Residential Mobility Heatmap",
-        color_continuous_scale="Plasma",
-        aspect="auto"
-    )
-    st.plotly_chart(fig_heatmap, use_container_width=True)
+    st.error("Clustering columns contain NaN values. Please adjust filters or handle missing data.")
 else:
-    st.warning("No data available for the selected dates. Please try a different date range or region.")
+    # Scale the data
+    data_scaled = StandardScaler().fit_transform(data_for_clustering)
 
-# Scatter Plot with Emphasis
-st.header("Mobility Clusters")
-st.markdown("""
-The scatter plot below groups regions into **3 clusters** based on mobility trends. 
-Use this to identify regions with similar mobility patterns.
-""")
+    # Perform clustering
+    kmeans = KMeans(n_clusters=3, random_state=42)
+    clusters = kmeans.fit_predict(data_scaled)
 
-fig_scatter = px.scatter(
-    filtered_df,
-    x='retail_and_recreation_percent_change_from_baseline',
-    y='workplaces_percent_change_from_baseline',
-    color='Cluster',
-    title="Clustering of Mobility Data",
-    labels={
-        'retail_and_recreation_percent_change_from_baseline': 'Retail & Recreation Mobility',
-        'workplaces_percent_change_from_baseline': 'Workplace Mobility'
-    },
-    hover_data=clustering_columns
-)
-st.plotly_chart(fig_scatter, use_container_width=True)
+    # Add clusters back to filtered_df using the original index
+    filtered_df = filtered_df.loc[data_for_clustering.index]  # Align indices
+    filtered_df['Cluster'] = clusters
 
-# Geospatial Map with Emphasis
-st.header("Workplace Mobility Across Provinces")
-st.markdown("""
-The map below shows **average workplace mobility changes** across provinces in Indonesia. 
-Darker shades indicate higher workplace mobility.
-""")
+    # Dashboard layout
+    st.title("Enhanced Mobility Insights Dashboard")
+    st.markdown("""
+    This dashboard utilizes **Gestalt Principles** for strategic data visualization, emphasizing key patterns and trends in mobility across Indonesia.
+    """)
 
-workplace_mobility = df.groupby('sub_region_1')['workplaces_percent_change_from_baseline'].mean().reset_index()
+    # Section 1: Residential Mobility Heatmap
+    st.header("1. Residential Mobility Heatmap")
+    st.markdown("""
+    **Key Insight**: Discover patterns in residential mobility by analyzing daily and hourly trends. 
+    Gestalt principle of proximity groups similar data points for better comprehension.
+    """)
 
-# Load Indonesia shapefile
-indonesia_map = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
-indonesia_map = indonesia_map[indonesia_map['name'] == 'Indonesia']
+    heatmap_data = filtered_df.pivot_table(
+        index=filtered_df['date'].dt.weekday,
+        columns=filtered_df['date'].dt.hour,
+        values='residential_percent_change_from_baseline',
+        aggfunc='mean'
+    )
 
-# Merge mobility data with geospatial data
-indonesia_map = indonesia_map.merge(workplace_mobility, left_on='name', right_on='sub_region_1', how='left')
+    if not heatmap_data.empty:
+        heatmap_data.index = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        fig_heatmap = px.imshow(
+            heatmap_data,
+            labels={"color": "% Change"},
+            title="Residential Mobility by Day and Hour",
+            color_continuous_scale="Viridis",
+            aspect="auto"
+        )
+        st.plotly_chart(fig_heatmap, use_container_width=True)
+    else:
+        st.warning("No data available for the selected dates. Please try a different date range or region.")
 
-# Plot geospatial map
-fig, ax = plt.subplots(1, 1, figsize=(12, 10))
-indonesia_map.plot(column='workplaces_percent_change_from_baseline',
-                   cmap='OrRd',
-                   legend=True,
-                   legend_kwds={'label': "Workplace Mobility Change (%)"},
-                   ax=ax)
-plt.title('Workplace Mobility Across Provinces in Indonesia')
-st.pyplot(fig)
+    # Section 2: Clustering Analysis
+    st.header("2. Regional Mobility Clusters")
+    st.markdown("""
+    **Key Insight**: Regions are grouped into **3 clusters** based on mobility trends. 
+    Leverage this to identify similar mobility behaviors and strategize interventions.
+    """)
 
-# Key Insights Section
-st.header("Key Insights")
-st.markdown("""
-1. **Residential Mobility**: The heatmap reveals higher residential mobility on weekends, indicating increased stay-at-home behavior.
-2. **Clustering**: Regions in Cluster 1 show higher workplace mobility, suggesting a faster return to pre-pandemic norms.
-3. **Geospatial Trends**: Provinces like Jakarta exhibit lower workplace mobility, likely due to stricter COVID-19 measures.
-""")
+    fig_scatter = px.scatter(
+        filtered_df,
+        x='retail_and_recreation_percent_change_from_baseline',
+        y='workplaces_percent_change_from_baseline',
+        color='Cluster',
+        title="Mobility Clustering Analysis",
+        labels={
+            'retail_and_recreation_percent_change_from_baseline': 'Retail & Recreation (%)',
+            'workplaces_percent_change_from_baseline': 'Workplace Mobility (%)'
+        },
+        hover_data=clustering_columns
+    )
+    st.plotly_chart(fig_scatter, use_container_width=True)
 
-st.caption("Data sourced from Google Mobility Reports | Visualization by Streamlit")
+    # Section 3: Geospatial Analysis
+    st.header("3. Workplace Mobility Across Regions")
+    st.markdown("""
+    **Key Insight**: Visualize geographical variations in workplace mobility. 
+    The principle of common fate is applied, where regions with similar trends are grouped visually.
+    """)
+
+    workplace_mobility = df.groupby('sub_region_1')['workplaces_percent_change_from_baseline'].mean().reset_index()
+
+    # Load Indonesia shapefile
+    indonesia_map = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
+    indonesia_map = indonesia_map[indonesia_map['name'] == 'Indonesia']
+
+    # Merge mobility data with geospatial data
+    indonesia_map = indonesia_map.merge(workplace_mobility, left_on='name', right_on='sub_region_1', how='left')
+
+    # Plot geospatial map
+    fig, ax = plt.subplots(1, 1, figsize=(12, 10))
+    indonesia_map.plot(column='workplaces_percent_change_from_baseline',
+                       cmap='coolwarm',
+                       legend=True,
+                       legend_kwds={'label': "Workplace Mobility Change (%)"},
+                       ax=ax)
+    plt.title('Workplace Mobility Trends Across Provinces')
+    st.pyplot(fig)
+
+    # Section 4: Key Insights Summary
+    st.header("4. Summary of Key Insights")
+    st.markdown("""
+    - **Residential Mobility**: Higher stay-at-home behavior observed on weekends.
+    - **Clusters**: Identified regions with distinct mobility recovery patterns.
+    - **Geospatial Trends**: Coastal areas exhibit unique workplace mobility dynamics.
+    """)
+
+    st.caption("Data Source: Google Mobility Reports | Dashboard Design: Enhanced with Gestalt Principles")
