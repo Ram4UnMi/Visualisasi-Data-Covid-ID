@@ -124,9 +124,12 @@ else:
 
     workplace_mobility = df.groupby('sub_region_1')['workplaces_percent_change_from_baseline'].mean().reset_index()
 
-    # Load Indonesia shapefile
-    indonesia_map = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
-    indonesia_map = indonesia_map[indonesia_map['name'] == 'Indonesia']
+    # Update this line to point to your local shapefile
+    indonesia_map = gpd.read_file("data/ne_10m_admin_0_countries.shp")
+    
+    # Filter only Indonesia
+    indonesia_map = indonesia_map[indonesia_map['ADMIN'] == 'Indonesia']
+
 
     # Merge mobility data with geospatial data
     indonesia_map = indonesia_map.merge(workplace_mobility, left_on='name', right_on='sub_region_1', how='left')
